@@ -1,0 +1,4 @@
+repo: 8c43d129440ac90abd7471b49a12a89bdf63c7d4
+node: 4f92f469534158c72c554435aca911ed385ae57b
+branch: stable-1.20
+tag: 1.20.2-1
