@@ -24,7 +24,6 @@ RELEASE_NJS?= 1
 PACKAGER?=	$(shell hg config ui.username)
 
 #TARBALL?=	https://nginx.org/download/nginx-$(VERSION).tar.gz
-TARBALL?=	https://yqcu02.baidupcs.com/file/cb0579329te0b8c8143e18cf380dca9b?bkt=en-2bd419aa17f4904fa917b429d287c6d6da59b6a427ca04578ba569571e781d2109890f423fcf273a&fid=842362326-250528-397599591965727&time=1647245089&sign=FDTAXUbGERLQlBHSKfWqiu-DCb740ccc5511e5e8fedcff06b081203-Fj0z%2B1IsCysm74ej8NA90A8CyDQ%3D&to=120&size=6737920&sta_dx=6737920&sta_cs=0&sta_ft=gz&sta_ct=0&sta_mt=0&fm2=MH%2CYangquan%2CAnywhere%2C%2Cshanxi2%2Ccnc&ctime=1647244990&mtime=1647244990&resv0=-1&resv1=0&resv2=rlim&resv3=5&resv4=6737920&vuk=842362326&iv=0&htype=&randtype=&tkbind_id=0&newver=1&newfm=1&secfm=1&flow_ver=3&pkey=en-461f94f3e735718dc109e2a426f22754687e41127a180b3247506006adfa4ccc53ca6d509416919d&sl=76480590&expires=8h&rt=sh&r=860578777&vbdid=522150134&fin=nginx-1.20.2.tar.gz&fn=nginx-1.20.2.tar.gz&rtype=1&dp-logid=532501363704908821&dp-callid=0.1&hps=1&tsl=80&csl=80&fsl=-1&csign=KFsxfr4duudVbBcg0VdLJJ6yqIU%3D&so=0&ut=6&uter=4&serv=0&uc=3622509817&ti=068bcab50ae430c7a1737ff9c3608309b0940ddeda3fbd94&hflag=30&from_type=1&adg=c_06510589a455673d226016b44e302c13&reqlabel=250528_f_4c61cf9689e9ece28f8af5858fb07f80_-1_c9f5e4bca60f91da78454c7e4994d035&by=themis&resvsflag=1-0-0-1-1-1
 
 TARBALL_NJS?=	https://hg.nginx.org/njs/archive/$(VERSION_NJS).tar.gz
 

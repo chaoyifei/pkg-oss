@@ -1,0 +1,63 @@
+MODULES+=	njs
+
+MODULE_SUMMARY_njs=	njs dynamic modules
+
+include $(CONTRIB)/src/njs/version
+
+MODULE_VERSION_njs=	$(NJS_VERSION)
+MODULE_RELEASE_njs=	1
+
+MODULE_VERSION_PREFIX_njs=$(MODULE_TARGET_PREFIX)
+
+MODULE_SOURCES_njs=	njs-$(NJS_VERSION).tar.gz
+
+MODULE_CONFARGS_njs=	--add-dynamic-module=njs-$(NJS_VERSION)/nginx
+
+.deps-module-njs:
+	cd $(CONTRIB) && make .sum-njs
+	touch $@
+
+define MODULE_DEFINITIONS_njs
+BuildRequires: libedit-devel
+endef
+export MODULE_DEFINITIONS_njs
+
+define MODULE_PREBUILD_njs
+cd %{bdir}/njs-$(NJS_VERSION) \&\& ./configure \&\& make njs
+endef
+export MODULE_PREBUILD_njs
+
+define MODULE_PREINSTALL_njs
+%{__install} -m644 %{bdir}/njs-$(NJS_VERSION)/CHANGES \
+        $$RPM_BUILD_ROOT%{_datadir}/doc/%{name}/
+%{__mkdir} -p $$RPM_BUILD_ROOT%{_bindir}
+%{__install} -m755 %{bdir}/njs-$(NJS_VERSION)/build/njs \
+        $$RPM_BUILD_ROOT%{_bindir}/
+endef
+export MODULE_PREINSTALL_njs
+
+define MODULE_FILES_njs
+%{_bindir}/njs
+endef
+export MODULE_FILES_njs
+
+define MODULE_POST_njs
+cat <<BANNER
+----------------------------------------------------------------------
+
+The $(MODULE_SUMMARY_njs) for $(MODULE_SUMMARY_PREFIX) have been installed.
+To enable these modules, add the following to /etc/nginx/nginx.conf
+and reload nginx:
+
+    load_module modules/ngx_http_js_module.so;
+    load_module modules/ngx_stream_js_module.so;
+
+Please refer to the modules documentation for further details:
+https://nginx.org/en/docs/njs/
+https://nginx.org/en/docs/http/ngx_http_js_module.html
+https://nginx.org/en/docs/stream/ngx_stream_js_module.html
+
+----------------------------------------------------------------------
+BANNER
+endef
+export MODULE_POST_njs

@@ -1,0 +1,155 @@
+# Maintainer: %%PACKAGE_VENDOR%%
+#
+
+_base_version=%%BASE_VERSION%%
+_base_release=%%BASE_RELEASE%%
+
+pkgname=nginx-module-%%MODULE%%
+pkgver=%%MODULE_VERSION_PREFIX%%%%MODULE_VERSION%%
+pkgrel=%%MODULE_RELEASE%%
+pkgdesc="%%SUMMARY%%"
+url="https://nginx.org/"
+arch="all"
+license="2-clause BSD-like license"
+depends="nginx-r$_base_version %%MODULE_DEPENDS%%"
+makedepends="linux-headers openssl-dev pcre-dev zlib-dev %%MODULE_BUILD_DEPENDS%%"
+provides="$pkgname-r$_base_version %%MODULE_PROVIDES%%"
+%%ADD_CONTROL_TAGS%%
+
+options="!check"
+
+pkgusers=""
+pkggroups=""
+install="$pkgname.post-install"
+
+subpackages="$pkgname-dbg"
+
+source="nginx-module-%%MODULE%%-$_base_version.tar.gz
+	%%MODULE_SOURCES%%
+	COPYRIGHT
+	"
+builddir="$srcdir/%%MODULE_SRCDIR%%"
+
+_modules_dir="usr/lib/nginx/modules"
+
+unpack() {
+	local u
+	verify || return 1
+	initdcheck || return 1
+	mkdir -p "$srcdir"
+	local gunzip=$(command -v pigz || echo gunzip)
+	[ $gunzip = "/usr/bin/pigz" ] && gunzip="$gunzip -d"
+	for u in $source; do
+		local s
+		local done=1
+		if is_remote "$u"; then
+			s="$SRCDEST/$(filename_from_uri $u)"
+		else
+			s="$startdir/$u"
+		fi
+		case "$s" in
+			*.tar)
+				done=0
+				msg "Unpacking $s..."
+				tar -C "$srcdir" -xf "$s" || return 1;;
+			*.tar.gz|*.tgz)
+				done=0
+				msg "Unpacking $s..."
+				$gunzip -c "$s" | tar -C "$srcdir" -x || return 1;;
+			*.tar.bz2)
+				done=0
+				msg "Unpacking $s..."
+				tar -C "$srcdir" -jxf "$s" || return 1;;
+			*.tar.lz)
+				done=0
+				msg "Unpacking $s..."
+				tar -C "$srcdir" --lzip -xf "$s" || return 1;;
+			*.tar.lzma)
+				done=0
+				msg "Unpacking $s..."
+				unlzma -T 0 -c "$s" | tar -C "$srcdir" -x  \
+					|| return 1;;
+			*.tar.xz)
+				done=0
+				msg "Unpacking $s..."
+				local threads_opt
+				if [ $(readlink -f $(command -v unxz)) != "/bin/busybox" ]; then
+					threads_opt="--threads=0"
+				fi
+				unxz $threads_opt -c "$s" | tar -C "$srcdir" -x || return 1;;
+			*.zip)
+				done=0
+				msg "Unpacking $s..."
+				unzip -n -q "$s" -d "$srcdir" || return 1;;
+		esac
+		if [ $done -eq 0 ]; then
+			bs=`basename $s`
+			sn=`echo $bs | sed -e 's/-[0-9].*$//'`
+			if [ "$sn" = "$bs" ] ; then
+				sn=${bs%-*}
+			fi
+			( cd "$srcdir" && \
+				sndir=`find * -maxdepth 1 -type d -name "${sn}-*" | head -1` ; \
+				test -n "$sndir" && ln -s ${sndir} ${sn} ||: )
+		fi
+	done
+}
+
+prepare() {
+	local file; for file in $source; do
+		case $file in
+		*~*.patch)
+			msg $file
+			cd "$srcdir"/${file%%~*}
+			patch -p 1 -i "$srcdir/$file"
+			;;
+		*.patch)
+			msg $file
+			cd "$builddir"
+			patch -p 1 -i "$srcdir/$file"
+			;;
+		extra-patch*)
+			msg $file
+			cd "$builddir/../"
+			patch -p 1 -i "$srcdir/$file"
+			;;
+		esac
+	done
+}
+
+build() {
+	cd "$builddir"
+
+	_nproc=`getconf _NPROCESSORS_ONLN`
+	if [ $_nproc -gt 1 ]; then
+		_make_opts="-j$_nproc"
+	fi
+
+	%%MODULE_PREBUILD%%
+
+	cd "$builddir"
+
+	CFLAGS= %%MODULE_ENV%% ./configure %%BASE_CONFIGURE_ARGS%% %%MODULE_CONFIGURE_ARGS%% --with-cc-opt="$CFLAGS %%MODULE_CC_OPT_DEBUG%%" --with-ld-opt="$LDFLAGS %%MODULE_LD_OPT_DEBUG%%" --with-debug
+	make $_make_opts modules
+	for so in `find objs/ -maxdepth 1 -type f -name "*.so"`; do \
+		debugso=`echo ${so} | sed -e 's|\.so$|-debug.so|'` ; \
+		mv ${so} ${debugso} ; \
+        done
+	CFLAGS= %%MODULE_ENV%% ./configure %%BASE_CONFIGURE_ARGS%% %%MODULE_CONFIGURE_ARGS%% --with-cc-opt="$CFLAGS %%MODULE_CC_OPT%%" --with-ld-opt="$LDFLAGS %%MODULE_LD_OPT%%"
+	make $_make_opts modules
+}
+
+package() {
+	cd "$builddir"
+
+	%%MODULE_PREINSTALL%%
+
+	mkdir -p "$pkgdir"/usr/lib/nginx/modules
+	for so in `find objs/ -maxdepth 1 -type f -name "*.so"`; do \
+		install -m755 ${so} "$pkgdir"/usr/lib/nginx/modules/ ; \
+	done
+
+	cd "$pkgdir"
+
+	install -Dm644 "$srcdir"/COPYRIGHT ./usr/share/licenses/$pkgname/COPYRIGHT
+}
